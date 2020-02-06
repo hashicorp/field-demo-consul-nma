@@ -1,0 +1,52 @@
+slug: consul-nma-demo
+id: bx96k6ugqdir
+type: track
+title: HashiCups Store (Consul Challenge Scenario)
+teaser: Accelerate HashiCups, Inc. existing networking infrastructure.
+description: |-
+  HashiCups, Inc. network team is struggling to keep up with the blistering pace of application development.
+  The core application is transitioning to a microservices architecture to meet the digital needs of the business, and
+  the traditional ticket based approach to networking isn't working. Learn how to to accelerate network middleware with Consul.
+icon: https://storage.googleapis.com/instruqt-frontend/assets/hashicorp/tracks/consul.png
+tags: []
+owner: hashicorp
+developers:
+- lance@hashicorp.com
+private: false
+published: false
+challenges:
+- slug: deploy-the-application
+  id: ri4avcdek1rk
+  type: challenge
+  title: Deploy the Application
+  teaser: A short description of the challenge.
+  assignment: |-
+    The assignment the participant needs to complete in order to proceed.
+
+    You can use any GitHub flavoured markdown.
+  notes:
+  - type: text
+    contents: Replace this text with your own text
+  tabs:
+  - title: frontend
+    type: service
+    hostname: frontend
+    port: 80
+  - title: consul
+    type: terminal
+    hostname: consul
+  - title: frontend
+    type: terminal
+    hostname: frontend
+  - title: product
+    type: terminal
+    hostname: product
+  - title: public
+    type: terminal
+    hostname: public
+  - title: postgres
+    type: terminal
+    hostname: postgres
+  difficulty: basic
+  timelimit: 900
+checksum: "8744670147738846592"

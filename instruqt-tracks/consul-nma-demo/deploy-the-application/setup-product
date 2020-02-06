@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#ip
+postgres_server_ip=$(getent ahostsv4 postgres |  awk '{print $1}' | head -1)
+
+#creds
+mkdir -p /etc/secrets
+cat <<-EOF > /etc/secrets/db-creds
+{
+"db_connection": "host=${postgres_server_ip} port=5432 user=postgres password=password dbname=products sslmode=disable",
+  "bind_address": ":9090",
+  "metrics_address": ":9103"
+}
+EOF
+
+#app
+curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+cat <<-EOF > /docker-compose.yml
+version: '3'
+services:
+  product:
+    network_mode: "host"
+    environment:
+      CONFIG_FILE: "/etc/secrets/db-creds"
+    image: "hashicorpdemoapp/product-api:v0.0.11"
+    volumes:
+       - /etc/secrets/db-creds:/etc/secrets/db-creds
+EOF
+
+/usr/local/bin/docker-compose up -d
+
+exit 0
