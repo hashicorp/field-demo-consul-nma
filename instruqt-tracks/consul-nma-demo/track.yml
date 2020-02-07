@@ -12,8 +12,8 @@ tags: []
 owner: hashicorp
 developers:
 - lance@hashicorp.com
-private: false
-published: false
+private: true
+published: true
 challenges:
 - slug: deploy-the-application
   id: ri4avcdek1rk
@@ -21,32 +21,200 @@ challenges:
   title: Deploy the Application
   teaser: A short description of the challenge.
   assignment: |-
-    The assignment the participant needs to complete in order to proceed.
+    Start by getting the application working from information in the existing ticket.
+    Once you have a functioning application we can gracefully migrate it over to Consul. <br>
 
-    You can use any GitHub flavoured markdown.
+    The frontend of the HashiCups application uses Nginx to reach the backend product API.
+    Get the IP address for the `Public API` server and update the Nginx configuration. <br>
+
+    Once you've updated Nginx configuration, restart the application.
+
+    ```
+    docker restart frontend
+    ```
+
+    The error message will be gone and you will now be able to load the application.
   notes:
   - type: text
-    contents: Replace this text with your own text
+    contents: |-
+      You are a NetOps engineer at HashiCups.
+
+      HashiCups has traditionally managed network changes through a legacy ticketing system.
+      infrastructure is provisioned, the provisioning outputs, i.e. ip addresses, flow through the ticketing system,
+      and system administrators perform manual updates on the target system. <br>
+
+      This workflow is presenting challenges for the network and infrastructure teams.
+      Application modernization means more services to track and scale.
+      The ticket system is bottlenecking this process. <br>
+
+      Moreover, applications are being ported to the cloud,
+      so a unified workflow across on-prem and cloud for virtual machine is desired. <br>
+
+      HashiCups has decided to adopt Consul for service discovery to solve this problem.
+      Your team has been tasked with migrating from the manual network workflow to Consul's registry.
+  - type: text
+    contents: |-
+      The HashiCups Store consists of several different components, all running within
+      VMs.
+  - type: text
+    contents: |-
+      The first components we'll take a look at are:
+        - [`frontend`](https://github.com/hashicorp-demoapp/frontend)
+          - A front end web service for displaying HashiCups products.
+        - [`product-api`](https://github.com/hashicorp-demoapp/product-api-go)
+          - A REST API service to serve CRUD operations on the `postgres` database.
+          - Requires credentials to connect to `postgres`
+        - `postgres`
+          - A Postgres database that contains the HashiCups products
+      On the next slide, you can see how all the components interact. Don't worry
+      about remembering it all now, we'll address them each in this track.
+  - type: text
+    contents: '![HashiCups Reference Architecture Diagram](https://github.com/hashicorp-demoapp/infrastructure/raw/master/images/infa.png)'
   tabs:
   - title: frontend
     type: service
     hostname: frontend
     port: 80
-  - title: consul
-    type: terminal
-    hostname: consul
-  - title: frontend
+  - title: terminal
     type: terminal
     hostname: frontend
-  - title: product
-    type: terminal
-    hostname: product
-  - title: public
-    type: terminal
-    hostname: public
-  - title: postgres
-    type: terminal
-    hostname: postgres
+  - title: nginx conf
+    type: code
+    hostname: frontend
+    path: /etc/nginx/conf.d/default.conf
+  - title: ticket - 167543
+    type: code
+    hostname: frontend
+    path: /tmp/ticket
   difficulty: basic
-  timelimit: 900
-checksum: "8744670147738846592"
+  timelimit: 300
+- slug: deploy-consul
+  id: zomoy5kaqqxg
+  type: challenge
+  title: Deploy Consul
+  teaser: A short description of the challenge.
+  assignment: |-
+    The infrastructure team has deployed a Consul agent on the frontend server.
+    Configure it to register the frontend service.
+
+    ```
+    cat <<-EOF > /etc/consul.d/frotend-service.json
+    {
+      "service": {
+        "name": "frontend",
+        "port": 80,
+        "tags": ["web"],
+        "check": {
+          "id": "web",
+          "name": "web TCP on port 80",
+          "tcp": "localhost:80",
+          "interval": "3s",
+          "timeout": "1s"
+        }
+      }
+    }
+    EOF
+
+    consul reload
+    ```
+
+    Check the Consul catalog for the service.
+  notes:
+  - type: text
+    contents: Your team has set up a central Consul server, and they have deployed
+      Consul agents on the other services. You need to register the frontend service
+      with Consul.
+  tabs:
+  - title: consul
+    type: service
+    hostname: consul
+    port: 8500
+  - title: terminal
+    type: terminal
+    hostname: frontend
+  difficulty: basic
+  timelimit: 300
+- slug: integrate-load-balancing
+  id: lx9uu3bh0cte
+  type: challenge
+  title: Integrate Load Balancing
+  teaser: A short description of the challenge.
+  assignment: |-
+    Create the Consul Template configuration
+
+    ```
+    cat <<-EOF > /etc/consul.d/consul-template-config.hcl
+    consul {
+    address = "localhost:8500"
+    retry {
+      enabled = true
+      attempts = 12
+      backoff = "250ms"
+      }
+    }
+    template {
+      source      = "/etc/nginx/conf.d/default.conf.ctmpl"
+      destination = "/etc/nginx/conf.d/default.conf"
+      perms = 0600
+      command = "docker exec frontend nginx -s reload"
+    }
+    EOF
+
+    consul-template --log-level=debug --once -config=/etc/consul.d/consul-template-config.hcl
+    ```
+
+    Validate the config
+
+    ```
+    cat /etc/nginx/conf.d/default.conf
+    ```
+
+    Now run the consul template process in the background.
+
+    ```
+    nohup consul-template --log-level=debug -config=/etc/consul.d/consul-template-config.hcl > /consul-template.out &
+    ```
+  notes:
+  - type: text
+    contents: |-
+      Now that you have your services registered in the Consul catalog, we can integrate them with your load balancers.
+
+      Consul Template can help us template the Nginx configuration.
+  tabs:
+  - title: consul
+    type: service
+    hostname: consul
+    port: 8500
+  - title: terminal
+    type: terminal
+    hostname: frontend
+  difficulty: basic
+  timelimit: 300
+- slug: scale-the-app
+  id: e3s1ncyc6vmi
+  type: challenge
+  title: Scale the App
+  teaser: A short description of the challenge.
+  assignment: |-
+    The application team has deployed to more instances of the product API to handle increased demand.
+    Check the Nginx configuration.
+
+    ```
+    cat /etc/nginx/conf.d/default.conf
+    ```
+
+    The new servers were automatically added to the load balancer!!!
+  notes:
+  - type: text
+    contents: Replace this text with your own text
+  tabs:
+  - title: consul
+    type: service
+    hostname: consul
+    port: 8500
+  - title: terminal
+    type: terminal
+    hostname: frontend
+  difficulty: basic
+  timelimit: 300
+checksum: "3292733836680356358"

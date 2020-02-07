@@ -1,0 +1,41 @@
+#!/bin/bash
+
+service consul stop
+local_ipv4=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/network-interfaces/0/ip)
+
+#consul
+mkdir -p /consul/data
+
+cat <<-EOF > /etc/consul.d/client.json
+{
+  "datacenter": "dc1",
+  "server": false,
+  "bind_addr": "${local_ipv4}",
+  "client_addr": "0.0.0.0",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "node_name": "Postgres",
+  "retry_join": [
+    "consul:8301"
+  ]
+}
+EOF
+
+cat <<-EOF > /etc/consul.d/postgres-service.json
+{
+  "service": {
+    "name": "postgres",
+    "port": 5432,
+    "tags": ["db"],
+    "check": {
+      "id": "db",
+      "name": "db TCP on port 5432",
+      "tcp": "localhost:5432",
+      "interval": "3s",
+      "timeout": "1s"
+    }
+  }
+}
+EOF
+
+service consul start

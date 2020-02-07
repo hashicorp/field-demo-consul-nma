@@ -8,15 +8,23 @@ virtualmachines:
   image: instruqt-hashicorp/consul-1-6-2
   shell: /bin/bash
   machine_type: n1-standard-1
-- name: product
-  image: instruqt-hashicorp/consul-1-6-2
-  shell: /bin/bash
-  machine_type: n1-standard-1
 - name: public
   image: instruqt-hashicorp/consul-1-6-2
   shell: /bin/bash
   machine_type: n1-standard-1
+- name: public2
+  image: instruqt-hashicorp/consul-1-6-2
+  shell: /bin/bash
+  machine_type: n1-standard-1
+- name: public3
+  image: instruqt-hashicorp/consul-1-6-2
+  shell: /bin/bash
+  machine_type: n1-standard-1
 - name: postgres
+  image: instruqt-hashicorp/consul-1-6-2
+  shell: /bin/bash
+  machine_type: n1-standard-1
+- name: product
   image: instruqt-hashicorp/consul-1-6-2
   shell: /bin/bash
   machine_type: n1-standard-1

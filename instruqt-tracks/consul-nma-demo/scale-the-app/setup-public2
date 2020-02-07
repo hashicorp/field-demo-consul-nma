@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#ip
+product_server_ip=$(getent ahostsv4 product|  awk '{print $1}' | head -1)
+
+curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+cat <<-EOF > /docker-compose.yml
+version: '3'
+services:
+  public:
+    network_mode: "host"
+    environment:
+      BIND_ADDRESS: ":8080"
+      PRODUCT_API_URI: "http://${product_server_ip}:9090"
+    image: "hashicorpdemoapp/public-api:v0.0.1"
+EOF
+
+/usr/local/bin/docker-compose up -d
+
+service consul stop
+local_ipv4=$(curl -H "Metadata-Flavor: Google" http://metadata/computeMetadata/v1/instance/network-interfaces/0/ip)
+
+#consul
+mkdir -p /consul/data
+
+cat <<-EOF > /etc/consul.d/client.json
+{
+  "datacenter": "dc1",
+  "server": false,
+  "bind_addr": "${local_ipv4}",
+  "client_addr": "0.0.0.0",
+  "data_dir": "/consul/data",
+  "log_level": "INFO",
+  "node_name": "Public2",
+  "retry_join": [
+    "consul:8301"
+  ]
+}
+EOF
+
+cat <<-EOF > /etc/consul.d/public-service.json
+{
+  "service": {
+    "name": "public",
+    "port": 8080,
+    "tags": ["api"],
+    "check": {
+      "id": "api",
+      "name": "api TCP on port 8080",
+      "tcp": "localhost:8080",
+      "interval": "3s",
+      "timeout": "1s"
+    }
+  }
+}
+EOF
+
+service consul start

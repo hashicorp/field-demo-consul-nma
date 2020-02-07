@@ -8,7 +8,6 @@ mkdir -p /consul/data
 cat <<-EOF > /etc/consul.d/server.json
 {
   "datacenter": "dc1",
-  "primary_datacenter": "dc1",
   "bind_addr": "${local_ipv4}",
   "client_addr": "0.0.0.0",
   "data_dir": "/consul/data",
@@ -19,10 +18,7 @@ cat <<-EOF > /etc/consul.d/server.json
   "bootstrap_expect": 1,
   "leave_on_terminate": false,
   "skip_leave_on_interrupt": true,
-  "rejoin_after_leave": true,
-  "connect": {
-    "enabled": true
-  }
+  "rejoin_after_leave": true
 }
 EOF
 

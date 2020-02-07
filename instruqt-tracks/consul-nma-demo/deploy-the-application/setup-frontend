@@ -1,7 +1,19 @@
 #!/bin/bash
 
 #ip
+frontend_server_ip=$(getent ahostsv4 frontend|  awk '{print $1}' | head -1)
 public_server_ip=$(getent ahostsv4 public|  awk '{print $1}' | head -1)
+product_server_ip=$(getent ahostsv4 product |  awk '{print $1}' | head -1)
+postgres_server_ip=$(getent ahostsv4 postgres |  awk '{print $1}' | head -1)
+
+#create file of IPs
+cat <<-EOF > /tmp/ticket
+App Servers
+  Frontend: ${frontend_server_ip}
+  Public API: ${public_server_ip}
+  Product API: ${product_server_ip}
+  Postgres: ${postgres_server_ip}
+EOF
 
 #conf
 mkdir -p /etc/nginx/conf.d
@@ -19,7 +31,7 @@ server {
     # Proxy pass the api location to save CORS
     # Use location exposed by Consul connect
     location /api {
-        proxy_pass http://${public_server_ip}:8080;
+        proxy_pass http://127.0.0.1:8080;
     }
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
@@ -35,6 +47,7 @@ cat <<-EOF > /docker-compose.yml
 version: '3'
 services:
   frontend:
+    container_name: "frontend"
     network_mode: "host"
     image: "hashicorpdemoapp/frontend:v0.0.1"
     volumes:
