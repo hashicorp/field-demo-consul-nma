@@ -1,0 +1,24 @@
+#!/bin/bash
+
+cat <<-EOF > /etc/consul.d/frotend-service.json
+{
+  "service": {
+    "name": "frontend",
+    "port": 80,
+    "tags": ["web"],
+    "check": {
+      "id": "web",
+      "name": "web TCP on port 80",
+      "tcp": "localhost:80",
+      "interval": "3s",
+      "timeout": "1s"
+    }
+  }
+}
+EOF
+
+consul reload
+
+sleep 5
+
+exit 0

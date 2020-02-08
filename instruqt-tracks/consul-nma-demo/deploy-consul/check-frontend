@@ -1,0 +1,10 @@
+#!/bin/bash
+
+status=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8500/v1/agent/health/service/name/frontend?passing=true)
+
+if [ $status != "200" ]; then
+  fail-message "Your health check is not passing for the frontend service."
+  exit 1
+fi
+
+exit 0
