@@ -12,7 +12,7 @@ tags: []
 owner: hashicorp
 developers:
 - lance@hashicorp.com
-private: true
+private: false
 published: true
 challenges:
 - slug: deploy-the-application
@@ -33,6 +33,7 @@ challenges:
     docker restart frontend
     ```
 
+    Refresh the frontend application.
     The error message will be gone and you will now be able to load the application.
   notes:
   - type: text
@@ -64,6 +65,8 @@ challenges:
         - [`product-api`](https://github.com/hashicorp-demoapp/product-api-go)
           - A REST API service to serve CRUD operations on the `postgres` database.
           - Requires credentials to connect to `postgres`
+        - [`public-api`](https://github.com/hashicorp-demoapp/public-api)
+          - A GraphQL public API
         - `postgres`
           - A Postgres database that contains the HashiCups products
       On the next slide, you can see how all the components interact. Don't worry
@@ -87,7 +90,7 @@ challenges:
     hostname: frontend
     path: /tmp/ticket
   difficulty: basic
-  timelimit: 300
+  timelimit: 500
 - slug: deploy-consul
   id: zomoy5kaqqxg
   type: challenge
@@ -133,7 +136,7 @@ challenges:
     type: terminal
     hostname: frontend
   difficulty: basic
-  timelimit: 300
+  timelimit: 500
 - slug: integrate-load-balancing
   id: lx9uu3bh0cte
   type: challenge
@@ -159,17 +162,24 @@ challenges:
       command = "docker exec frontend nginx -s reload"
     }
     EOF
+    ```
 
+    Now that you have a template configuration, you can test it by executing it with the `--once` option.
+    You'll run it in `debug` mode for additional output. <br>
+
+    ```
     consul-template --log-level=debug --once -config=/etc/consul.d/consul-template-config.hcl
     ```
 
-    Validate the config
+    Validate the Nginx config rendered correctly.
 
     ```
     cat /etc/nginx/conf.d/default.conf
     ```
 
-    Now run the consul template process in the background.
+    You'll notice the IP address of our backend service was dynamically populated in the Nginx configuration file. <br>
+
+    Now run the consul template process in the background. In production, systemd or some other process supervisor would handle this task. <br>
 
     ```
     nohup consul-template --log-level=debug -config=/etc/consul.d/consul-template-config.hcl > /consul-template.out &
@@ -180,6 +190,7 @@ challenges:
       Now that you have your services registered in the Consul catalog, we can integrate them with your load balancers.
 
       Consul Template can help us template the Nginx configuration.
+      You can learn more about Consul Template [here](https://learn.hashicorp.com/consul/developer-configuration/consul-template).
   tabs:
   - title: consul
     type: service
@@ -189,14 +200,21 @@ challenges:
     type: terminal
     hostname: frontend
   difficulty: basic
-  timelimit: 300
+  timelimit: 500
 - slug: scale-the-app
   id: e3s1ncyc6vmi
   type: challenge
   title: Scale the App
   teaser: A short description of the challenge.
   assignment: |-
-    The application team has deployed to more instances of the product API to handle increased demand.
+    You can see the public service now has three instances running.
+    You could find these new IPs in the web UI, but let's try the Consul's API this time.
+
+    ```
+    curl -s http://127.0.0.1:8500/v1/health/service/public?passing=true | jq
+    curl -s http://127.0.0.1:8500/v1/health/service/public?passing=true | jq '[.. |."Address"? | select(. != null)]'
+    ```
+
     Check the Nginx configuration.
 
     ```
@@ -204,17 +222,21 @@ challenges:
     ```
 
     The new servers were automatically added to the load balancer!!!
+    You just accelerated your load balancer workflow with Consul!!!
   notes:
   - type: text
-    contents: Replace this text with your own text
+    contents: |-
+      The application team has deployed more instances of the product API to handle increased demand.
+      Revisit your Nginx configuration and determine if Consul correctly populated these updates to the load balancer.
   tabs:
   - title: consul
     type: service
     hostname: consul
+    path: /ui/dc1/services/public
     port: 8500
   - title: terminal
     type: terminal
     hostname: frontend
   difficulty: basic
-  timelimit: 300
-checksum: "3292733836680356358"
+  timelimit: 500
+checksum: "14185636264253735734"

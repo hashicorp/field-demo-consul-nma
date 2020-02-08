@@ -8,7 +8,7 @@ virtualmachines:
   image: instruqt-hashicorp/consul-1-6-2
   shell: /bin/bash
   machine_type: n1-standard-1
-- name: public
+- name: public1
   image: instruqt-hashicorp/consul-1-6-2
   shell: /bin/bash
   machine_type: n1-standard-1
