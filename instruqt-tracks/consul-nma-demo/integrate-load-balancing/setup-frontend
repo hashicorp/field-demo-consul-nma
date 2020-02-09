@@ -5,31 +5,3 @@ wget https://releases.hashicorp.com/consul-template/0.22.0/consul-template_0.22.
 cd /usr/local/bin/
 tar -zxvf /tmp/consul-template.tgz
 chmod +x /usr/local/bin/consul-template
-
-
-cat <<-EOF > /etc/nginx/conf.d/default.conf.ctmpl
-upstream backend {
-{{ range service "public" }}
-  server {{ .Address }}:{{ .Port }};
-{{ end }}
-}
-server {
-    listen       80;
-    server_name  localhost;
-    #charset koi8-r;
-    #access_log  /var/log/nginx/host.access.log  main;
-    location / {
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
-    }
-    # Proxy pass the api location to save CORS
-    # Use location exposed by Consul connect
-    location /api {
-        proxy_pass http://backend;
-    }
-    error_page   500 502 503 504  /50x.html;
-    location = /50x.html {
-        root   /usr/share/nginx/html;
-    }
-}
-EOF
